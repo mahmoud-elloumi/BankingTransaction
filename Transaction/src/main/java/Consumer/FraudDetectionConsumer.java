@@ -17,8 +17,12 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,20 +30,26 @@ import model.BankTransaction;
 import model.BankTransaction.TransactionStatus;
 import model.BankTransaction.TransactionType;
 import serialization.BankTransactionDeserializer;
+import serialization.BankTransactionSerializer;
 
 /**
  * Real-time fraud detection consumer.
  *
- * Detection rules: 1. Single transaction > 10,000 EUR → HIGH risk 2. Velocity:
- * > 3 transactions in 60 seconds from same sender → MEDIUM risk 3. Round-number
- * large amounts (e.g. 50000, 99000) → LOW risk flag 4. Transfer to unknown/new
- * receiver → LOW risk flag
+ * Input: bank.transactions.pending → reads all new transactions
+ * Output: bank.transactions.fraud → publishes flagged/suspicious transactions
+ *
+ * Detection rules:
+ * 1. Single transaction > 10,000 EUR → HIGH risk
+ * 2. Velocity: > 3 transactions in 60 seconds from same sender → MEDIUM risk
+ * 3. Round-number large amounts (e.g. 50000, 99000) → LOW risk flag
+ * 4. Transfer to unknown/new receiver → LOW risk flag
  */
 public class FraudDetectionConsumer implements Runnable {
 
 	private static final Logger log = LoggerFactory.getLogger(FraudDetectionConsumer.class);
 
 	private static final String TOPIC_PENDING = "bank.transactions.pending";
+	private static final String TOPIC_FRAUD = "bank.transactions.fraud";
 	private static final double HIGH_AMOUNT_LIMIT = 10_000.0;
 	private static final int VELOCITY_LIMIT = 3;
 	private static final int VELOCITY_WINDOW_S = 60;
@@ -52,18 +62,29 @@ public class FraudDetectionConsumer implements Runnable {
 			Arrays.asList("ACC-001", "ACC-002", "ACC-003", "ACC-004", "ACC-005"));
 
 	private final KafkaConsumer<String, BankTransaction> consumer;
+	private final KafkaProducer<String, BankTransaction> fraudProducer;
 	private volatile boolean running = true;
 
 	public FraudDetectionConsumer(String bootstrapServers, String groupId) {
-		Properties props = new Properties();
-		props.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-		props.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-		props.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, BankTransactionDeserializer.class.getName());
-		props.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-		props.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-		props.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+		// ─── Consumer config ───
+		Properties cProps = new Properties();
+		cProps.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+		cProps.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+		cProps.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, BankTransactionDeserializer.class.getName());
+		cProps.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+		cProps.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+		cProps.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+		this.consumer = new KafkaConsumer<>(cProps);
 
-		this.consumer = new KafkaConsumer<>(props);
+		// ─── Producer config (to publish to fraud topic) ───
+		Properties pProps = new Properties();
+		pProps.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+		pProps.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+		pProps.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, BankTransactionSerializer.class.getName());
+		pProps.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+		pProps.setProperty(ProducerConfig.RETRIES_CONFIG, "3");
+		pProps.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+		this.fraudProducer = new KafkaProducer<>(pProps);
 	}
 
 	@Override
@@ -87,6 +108,7 @@ public class FraudDetectionConsumer implements Runnable {
 			if (running)
 				throw e;
 		} finally {
+			fraudProducer.close();
 			consumer.close();
 			log.info("FraudDetectionConsumer closed.");
 		}
@@ -121,9 +143,16 @@ public class FraudDetectionConsumer implements Runnable {
 			log.warn("🚨 FRAUD ALERT | txId={} | sender={} | amount={} EUR | flags={}", tx.getTransactionId(),
 					tx.getSenderId(), tx.getAmount(), alerts);
 
-			// In production: publish to bank.transactions.fraud topic
-			// fraudProducer.send(new ProducerRecord<>("bank.transactions.fraud",
-			// tx.getSenderId(), tx));
+			// ── Publish to fraud topic ──
+			fraudProducer.send(new ProducerRecord<>(TOPIC_FRAUD, tx.getSenderId(), tx), (metadata, ex) -> {
+				if (ex == null) {
+					log.info("  → Published to {} | partition={} offset={}", TOPIC_FRAUD, metadata.partition(),
+							metadata.offset());
+				} else {
+					log.error("  → Failed to publish to {}", TOPIC_FRAUD, ex);
+				}
+			});
+			fraudProducer.flush();
 		} else {
 			log.info("✅ Clean transaction | txId={} | sender={} | amount={} EUR", tx.getTransactionId(),
 					tx.getSenderId(), tx.getAmount());

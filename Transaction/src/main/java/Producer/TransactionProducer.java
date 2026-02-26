@@ -15,12 +15,18 @@ import java.util.Properties;
  *
  * Topics used:
  * - bank.transactions.pending → all new transactions (key = senderId)
+ * - bank.transactions.approved → validated transactions
+ * - bank.transactions.rejected → rejected transactions
+ * - bank.transactions.fraud → flagged/suspicious transactions
  */
 public class TransactionProducer {
 
     private static final Logger log = LoggerFactory.getLogger(TransactionProducer.class);
 
     public static final String TOPIC_PENDING = "bank.transactions.pending";
+    public static final String TOPIC_APPROVED = "bank.transactions.approved";
+    public static final String TOPIC_REJECTED = "bank.transactions.rejected";
+    public static final String TOPIC_FRAUD = "bank.transactions.fraud";
 
     private final KafkaProducer<String, BankTransaction> producer;
 

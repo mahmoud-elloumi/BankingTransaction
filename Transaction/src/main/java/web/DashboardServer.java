@@ -36,7 +36,10 @@ import java.util.concurrent.*;
 public class DashboardServer {
 
     private static final Logger log = LoggerFactory.getLogger(DashboardServer.class);
-    private static final String TOPIC = "bank.transactions.pending";
+    private static final String TOPIC_PENDING = "bank.transactions.pending";
+    private static final String TOPIC_APPROVED = "bank.transactions.approved";
+    private static final String TOPIC_REJECTED = "bank.transactions.rejected";
+    private static final String TOPIC_FRAUD = "bank.transactions.fraud";
     private static final String BOOTSTRAP = "127.0.0.1:9092";
     private static final int PORT = 8080;
     private static final double HIGH_AMOUNT_LIMIT = 10_000.0;
@@ -106,8 +109,8 @@ public class DashboardServer {
         cProps.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
 
         try (KafkaConsumer<String, BankTransaction> consumer = new KafkaConsumer<>(cProps)) {
-            consumer.subscribe(List.of(TOPIC));
-            log.info("Dashboard consumer started, listening on {}", TOPIC);
+            consumer.subscribe(List.of(TOPIC_PENDING));
+            log.info("Dashboard consumer started, listening on {}", TOPIC_PENDING);
 
             while (running) {
                 ConsumerRecords<String, BankTransaction> records = consumer.poll(Duration.ofMillis(500));
@@ -162,12 +165,23 @@ public class DashboardServer {
             fraudAlerts.add("UNKNOWN-RECEIVER (" + tx.getReceiverId() + ")");
         }
 
+        // ─── Route to downstream topics ───
+        String routedTo;
         if (!fraudAlerts.isEmpty()) {
             tx.setStatus(TransactionStatus.FLAGGED);
             totalFlagged++;
             if (validationResult.equals("APPROVED"))
                 totalApproved--; // correct the count
+            routedTo = TOPIC_FRAUD;
+            producer.send(new ProducerRecord<>(TOPIC_FRAUD, tx.getSenderId(), tx));
+        } else if (rejectReason != null) {
+            routedTo = TOPIC_REJECTED;
+            producer.send(new ProducerRecord<>(TOPIC_REJECTED, tx.getSenderId(), tx));
+        } else {
+            routedTo = TOPIC_APPROVED;
+            producer.send(new ProducerRecord<>(TOPIC_APPROVED, tx.getSenderId(), tx));
         }
+        producer.flush();
 
         // Store result
         Map<String, Object> entry = new LinkedHashMap<>();
@@ -184,6 +198,7 @@ public class DashboardServer {
         entry.put("offset", offset);
         entry.put("validation", validationResult);
         entry.put("fraudAlerts", fraudAlerts);
+        entry.put("routedTo", routedTo);
         entry.put("processedAt", LocalDateTime.now().toString());
 
         processedTransactions.add(0, entry); // newest first
@@ -257,7 +272,7 @@ public class DashboardServer {
 
             BankTransaction tx = new BankTransaction(senderId, receiverId, amount, currency, type, description);
 
-            ProducerRecord<String, BankTransaction> record = new ProducerRecord<>(TOPIC, tx.getSenderId(), tx);
+            ProducerRecord<String, BankTransaction> record = new ProducerRecord<>(TOPIC_PENDING, tx.getSenderId(), tx);
             producer.send(record, (metadata, exception) -> {
                 if (exception == null) {
                     log.info("Sent to Kafka: {} partition={} offset={}", tx.getTransactionId(), metadata.partition(),
@@ -272,7 +287,7 @@ public class DashboardServer {
             sendJson(exchange, 200, Map.of(
                     "success", true,
                     "transactionId", tx.getTransactionId(),
-                    "message", "Transaction sent to Kafka topic: " + TOPIC));
+                    "message", "Transaction sent to Kafka topic: " + TOPIC_PENDING));
         } catch (Exception e) {
             log.error("Error sending transaction", e);
             sendJson(exchange, 400, Map.of("error", e.getMessage()));
@@ -328,7 +343,7 @@ public class DashboardServer {
             BankTransaction tx = new BankTransaction(
                     (String) d[0], (String) d[1], (double) d[2],
                     (String) d[3], (TransactionType) d[4], (String) d[5]);
-            producer.send(new ProducerRecord<>(TOPIC, tx.getSenderId(), tx));
+            producer.send(new ProducerRecord<>(TOPIC_PENDING, tx.getSenderId(), tx));
             ids.add(tx.getTransactionId());
             totalSent++;
         }
