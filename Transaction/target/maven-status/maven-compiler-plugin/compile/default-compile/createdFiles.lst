@@ -1,9 +1,0 @@
-Consumer\FraudDetectionConsumer.class
-Consumer\TransactionConsumer.class
-model\BankTransaction$TransactionStatus.class
-Producer\TransactionProducer.class
-web\DashboardServer.class
-model\BankTransaction.class
-serialization\BankTransactionDeserializer.class
-serialization\BankTransactionSerializer.class
-model\BankTransaction$TransactionType.class

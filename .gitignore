@@ -1,4 +1,19 @@
+# Compiled files
 Transaction/target/
 target/
 *.class
 *.jar
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log
+audit-log.csv
+Transaction/audit-log.csv
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -883,33 +883,93 @@
 
         <!-- Architecture Diagram -->
         <div class="architecture-section">
-            <div class="section-title"><span>🏗️</span> Architecture Kafka — Flux de Traitement</div>
+            <div class="section-title"><span>🏗️</span> Architecture Kafka — Flux de Traitement (4 Consumers)</div>
+
+            <!-- Row 1: Producer → Kafka Pending -->
             <div class="architecture-flow">
                 <div class="arch-node producer">
-                    📤 Producer<br>
-                    <small>TransactionProducer</small>
+                    📤 Producer / Dashboard<br>
+                    <small>API REST + TransactionProducer</small>
                 </div>
                 <div class="arch-arrow">→</div>
                 <div class="arch-node kafka">
-                    📡 Apache Kafka<br>
-                    <small>Topic: bank.transactions.pending</small>
+                    📡 Topic: pending<br>
+                    <small>bank.transactions.pending</small>
                 </div>
                 <div class="arch-arrow">→</div>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <div class="arch-node consumer">
-                        ✅ Consumer Validation<br>
-                        <small>TransactionConsumer</small>
+                        ✅ TransactionConsumer<br>
+                        <small>Validation → approved / rejected</small>
                     </div>
                     <div class="arch-node fraud">
-                        🚨 Détection Fraude<br>
-                        <small>FraudDetectionConsumer</small>
+                        🚨 FraudDetectionConsumer<br>
+                        <small>Analyse fraude → fraud</small>
                     </div>
                 </div>
-                <div class="arch-arrow">→</div>
+            </div>
+
+            <!-- Separator -->
+            <div
+                style="text-align: center; padding: 8px 0; color: var(--text-muted); font-size: 22px; animation: arrowPulse 1.5s ease-in-out infinite;">
+                ↓</div>
+
+            <!-- Row 2: Downstream Topics -->
+            <div class="architecture-flow">
+                <div class="arch-node consumer" style="background: rgba(16, 185, 129, 0.08); min-width: 140px;">
+                    ✅ Topic: approved<br>
+                    <small>bank.transactions.approved</small>
+                </div>
+                <div class="arch-node"
+                    style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--accent-red); min-width: 140px;">
+                    ❌ Topic: rejected<br>
+                    <small>bank.transactions.rejected</small>
+                </div>
+                <div class="arch-node fraud" style="min-width: 140px;">
+                    🚨 Topic: fraud<br>
+                    <small>bank.transactions.fraud</small>
+                </div>
+            </div>
+
+            <!-- Separator -->
+            <div
+                style="text-align: center; padding: 8px 0; color: var(--text-muted); font-size: 22px; animation: arrowPulse 1.5s ease-in-out infinite;">
+                ↓</div>
+
+            <!-- Row 3: Downstream Consumers -->
+            <div class="architecture-flow">
+                <div class="arch-node"
+                    style="background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.3); color: var(--accent-yellow); min-width: 180px;">
+                    📧 NotificationConsumer<br>
+                    <small>Envoi emails SMTP Gmail</small>
+                </div>
+                <div class="arch-node"
+                    style="background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.3); color: var(--accent-purple); min-width: 180px;">
+                    📋 AuditLogConsumer<br>
+                    <small>Journal CSV (audit-log.csv)</small>
+                </div>
                 <div class="arch-node producer"
-                    style="background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.3); color: var(--accent-cyan);">
+                    style="background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.3); color: var(--accent-cyan); min-width: 180px;">
                     📊 Dashboard<br>
                     <small>Résultats en temps réel</small>
+                </div>
+            </div>
+
+            <!-- Consumer Groups Legend -->
+            <div
+                style="margin-top: 16px; padding: 14px 18px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid var(--border-glass);">
+                <div
+                    style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+                    Consumer Groups Kafka</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <span
+                        style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.2); font-weight: 600; font-family: 'JetBrains Mono', monospace;">bank-transaction-validator</span>
+                    <span
+                        style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.2); font-weight: 600; font-family: 'JetBrains Mono', monospace;">bank-fraud-detector</span>
+                    <span
+                        style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(234, 179, 8, 0.1); color: var(--accent-yellow); border: 1px solid rgba(234, 179, 8, 0.2); font-weight: 600; font-family: 'JetBrains Mono', monospace;">bank-notification-service</span>
+                    <span
+                        style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(139, 92, 246, 0.1); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.2); font-weight: 600; font-family: 'JetBrains Mono', monospace;">bank-audit-logger</span>
                 </div>
             </div>
         </div>
