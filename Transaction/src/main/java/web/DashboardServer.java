@@ -25,13 +25,15 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * Embedded HTTP Dashboard Server for Banking Kafka Demo.
+ * Embedded HTTP Dashboard Server for Banking Kafka.
  * 
  * Endpoints:
- * GET / → Dashboard HTML
- * POST /api/send → Send a transaction to Kafka
- * GET /api/transactions → Get all processed transactions (JSON)
- * GET /api/stats → Get statistics (JSON)
+ * GET / → Login page
+ * GET /dashboard → Dashboard HTML (requires auth)
+ * POST /api/login → Authenticate user
+ * POST /api/send → Send a transaction to Kafka (requires auth)
+ * GET /api/transactions → Get all processed transactions (requires auth)
+ * GET /api/stats → Get statistics (requires auth)
  */
 public class DashboardServer {
 
@@ -55,6 +57,14 @@ public class DashboardServer {
 
     // Velocity tracking: senderId → list of transaction timestamps
     private final Map<String, Deque<LocalDateTime>> velocityTracker = new ConcurrentHashMap<>();
+
+    // Session management
+    private final Map<String, String> activeSessions = new ConcurrentHashMap<>(); // token → username
+    private static final Map<String, String> USERS = Map.of(
+            "admin", "admin123",
+            "mahmoud", "kafka2026",
+            "operateur", "bank@2026",
+            "anis", "kafka2026");
 
     // Stats
     private int totalSent = 0;
@@ -83,16 +93,21 @@ public class DashboardServer {
 
         // Start HTTP server
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
-        server.createContext("/", this::handleDashboard);
+        server.createContext("/", this::handleLogin);
+        server.createContext("/dashboard", this::handleDashboard);
+        server.createContext("/api/login", this::handleApiLogin);
         server.createContext("/api/send", this::handleSend);
         server.createContext("/api/transactions", this::handleTransactions);
         server.createContext("/api/stats", this::handleStats);
-        server.createContext("/api/demo", this::handleDemo);
         server.setExecutor(Executors.newFixedThreadPool(4));
         server.start();
 
         log.info("========================================");
         log.info("  Dashboard started: http://localhost:{}", PORT);
+        log.info("  Login credentials:");
+        log.info("    admin / admin123");
+        log.info("    mahmoud / kafka2026");
+        log.info("    operateur / bank@2026");
         log.info("========================================");
     }
 
@@ -228,6 +243,21 @@ public class DashboardServer {
 
     // ─── HTTP Handlers ───────────────────────────────────────────────────────
 
+    private void handleLogin(HttpExchange exchange) throws IOException {
+        if (!"GET".equals(exchange.getRequestMethod())) {
+            sendResponse(exchange, 405, "text/plain", "Method Not Allowed");
+            return;
+        }
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream("login.html")) {
+            if (is == null) {
+                sendResponse(exchange, 500, "text/plain", "login.html not found in classpath");
+                return;
+            }
+            String html = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            sendResponse(exchange, 200, "text/html; charset=UTF-8", html);
+        }
+    }
+
     private void handleDashboard(HttpExchange exchange) throws IOException {
         if (!"GET".equals(exchange.getRequestMethod())) {
             sendResponse(exchange, 405, "text/plain", "Method Not Allowed");
@@ -243,10 +273,61 @@ public class DashboardServer {
         }
     }
 
+    private void handleApiLogin(HttpExchange exchange) throws IOException {
+        setCors(exchange);
+        if ("OPTIONS".equals(exchange.getRequestMethod())) {
+            exchange.sendResponseHeaders(204, -1);
+            return;
+        }
+        if (!"POST".equals(exchange.getRequestMethod())) {
+            sendJson(exchange, 405, Map.of("error", "Method Not Allowed"));
+            return;
+        }
+
+        try {
+            String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            Map<String, String> params = mapper.readValue(body, Map.class);
+            String username = params.getOrDefault("username", "").trim();
+            String password = params.getOrDefault("password", "");
+
+            if (USERS.containsKey(username) && USERS.get(username).equals(password)) {
+                // Generate session token
+                String token = UUID.randomUUID().toString();
+                activeSessions.put(token, username);
+                log.info("User '{}' logged in successfully", username);
+                sendJson(exchange, 200, Map.of(
+                        "success", true,
+                        "token", token,
+                        "username", username,
+                        "message", "Connexion réussie"));
+            } else {
+                log.warn("Failed login attempt for user '{}'", username);
+                sendJson(exchange, 401, Map.of(
+                        "success", false,
+                        "error", "Nom d'utilisateur ou mot de passe incorrect"));
+            }
+        } catch (Exception e) {
+            sendJson(exchange, 400, Map.of("error", e.getMessage()));
+        }
+    }
+
+    private boolean isAuthenticated(HttpExchange exchange) {
+        String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            return activeSessions.containsKey(token);
+        }
+        return false;
+    }
+
     private void handleSend(HttpExchange exchange) throws IOException {
         setCors(exchange);
         if ("OPTIONS".equals(exchange.getRequestMethod())) {
             exchange.sendResponseHeaders(204, -1);
+            return;
+        }
+        if (!isAuthenticated(exchange)) {
+            sendJson(exchange, 401, Map.of("error", "Non autorisé"));
             return;
         }
         if (!"POST".equals(exchange.getRequestMethod())) {
@@ -261,7 +342,7 @@ public class DashboardServer {
             String senderId = params.getOrDefault("senderId", null);
             String receiverId = params.getOrDefault("receiverId", null);
             double amount = Double.parseDouble(params.getOrDefault("amount", "0"));
-            String currency = params.getOrDefault("currency", "EUR");
+            String currency = params.getOrDefault("currency", "TND");
             TransactionType type = TransactionType.valueOf(params.getOrDefault("type", "TRANSFER"));
             String description = params.getOrDefault("description", "");
 
@@ -287,7 +368,7 @@ public class DashboardServer {
             sendJson(exchange, 200, Map.of(
                     "success", true,
                     "transactionId", tx.getTransactionId(),
-                    "message", "Transaction sent to Kafka topic: " + TOPIC_PENDING));
+                    "message", "Transaction envoyée au topic Kafka: " + TOPIC_PENDING));
         } catch (Exception e) {
             log.error("Error sending transaction", e);
             sendJson(exchange, 400, Map.of("error", e.getMessage()));
@@ -300,6 +381,10 @@ public class DashboardServer {
             exchange.sendResponseHeaders(204, -1);
             return;
         }
+        if (!isAuthenticated(exchange)) {
+            sendJson(exchange, 401, Map.of("error", "Non autorisé"));
+            return;
+        }
         sendJson(exchange, 200, processedTransactions);
     }
 
@@ -309,6 +394,10 @@ public class DashboardServer {
             exchange.sendResponseHeaders(204, -1);
             return;
         }
+        if (!isAuthenticated(exchange)) {
+            sendJson(exchange, 401, Map.of("error", "Non autorisé"));
+            return;
+        }
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("totalSent", totalSent);
         stats.put("totalProcessed", processedTransactions.size());
@@ -316,43 +405,6 @@ public class DashboardServer {
         stats.put("totalRejected", totalRejected);
         stats.put("totalFlagged", totalFlagged);
         sendJson(exchange, 200, stats);
-    }
-
-    private void handleDemo(HttpExchange exchange) throws IOException {
-        setCors(exchange);
-        if ("OPTIONS".equals(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(204, -1);
-            return;
-        }
-        if (!"POST".equals(exchange.getRequestMethod())) {
-            sendJson(exchange, 405, Map.of("error", "Method Not Allowed"));
-            return;
-        }
-
-        // Send 5 demo transactions
-        Object[][] data = {
-                { "ACC-001", "ACC-002", 1500.00, "EUR", TransactionType.TRANSFER, "Rent payment" },
-                { "ACC-003", "ACC-001", 250.75, "EUR", TransactionType.PAYMENT, "Online shopping" },
-                { "ACC-002", null, 5000.00, "EUR", TransactionType.WITHDRAWAL, "ATM withdrawal" },
-                { null, "ACC-004", 3000.00, "EUR", TransactionType.DEPOSIT, "Salary deposit" },
-                { "ACC-005", "ACC-999", 98000.00, "EUR", TransactionType.TRANSFER, "Suspicious transfer" },
-        };
-
-        List<String> ids = new ArrayList<>();
-        for (Object[] d : data) {
-            BankTransaction tx = new BankTransaction(
-                    (String) d[0], (String) d[1], (double) d[2],
-                    (String) d[3], (TransactionType) d[4], (String) d[5]);
-            producer.send(new ProducerRecord<>(TOPIC_PENDING, tx.getSenderId(), tx));
-            ids.add(tx.getTransactionId());
-            totalSent++;
-        }
-        producer.flush();
-
-        sendJson(exchange, 200, Map.of(
-                "success", true,
-                "message", "5 demo transactions sent",
-                "transactionIds", ids));
     }
 
     // ─── Utils ───────────────────────────────────────────────────────────────

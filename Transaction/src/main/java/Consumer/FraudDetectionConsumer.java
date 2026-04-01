@@ -127,11 +127,6 @@ public class FraudDetectionConsumer implements Runnable {
 			alerts.add(String.format("VELOCITY-EXCEEDED (>%d txns in %ds)", VELOCITY_LIMIT, VELOCITY_WINDOW_S));
 		}
 
-		// Rule 3 – Suspicious round number
-		if (isRoundLargeAmount(tx.getAmount())) {
-			alerts.add("ROUND-LARGE-AMOUNT");
-		}
-
 		// Rule 4 – Unknown receiver on transfers
 		if (tx.getType() == TransactionType.TRANSFER && tx.getReceiverId() != null
 				&& !knownReceivers.contains(tx.getReceiverId())) {
@@ -173,10 +168,6 @@ public class FraudDetectionConsumer implements Runnable {
 
 		timestamps.addLast(now);
 		return timestamps.size() > VELOCITY_LIMIT;
-	}
-
-	private boolean isRoundLargeAmount(double amount) {
-		return amount >= 5000 && amount % 1000 == 0;
 	}
 
 	public void shutdown() {

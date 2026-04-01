@@ -1,0 +1,193 @@
+================================================================================
+                    GUIDE DE LANCEMENT RAPIDE - TRANSACTFLOW
+================================================================================
+
+DEUX FAÇONS DE LANCER TOUS LES SERVICES EN PARALLÈLE:
+
+================================================================================
+OPTION 1: SCRIPT BATCH (Recommandé pour Windows)
+================================================================================
+
+1. Ouvrir l'Explorateur de fichiers
+2. Aller à: C:\BankingTransaction\
+3. Double-cliquer sur: START_ALL.bat
+
+Cela va:
+✓ Ouvrir automatiquement 5 fenêtres de terminal
+✓ Lancer Kafka Server
+✓ Lancer Dashboard Server (port 8080)
+✓ Lancer Notification Consumer (emails)
+✓ Lancer Fraud Detection Consumer
+✓ Lancer Audit Log Consumer
+
+Puis:
+4. Attendre 30-45 secondes
+5. Ouvrir le navigateur: http://localhost:8080
+6. Se connecter avec: admin / admin123
+
+================================================================================
+OPTION 2: SCRIPT POWERSHELL (Alternatif)
+================================================================================
+
+1. Ouvrir PowerShell (Admin)
+2. Exécuter:
+
+   Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
+   C:\BankingTransaction\START_ALL.ps1
+
+3. Appuyer sur "O" si demandé
+
+Cela va:
+✓ Lancer automatiquement tous les services
+✓ Afficher un résumé de l'état
+
+Puis:
+4. Attendre 30-45 secondes
+5. Ouvrir le navigateur: http://localhost:8080
+6. Se connecter avec: admin / admin123
+
+================================================================================
+OPTION 3: LANCER MANUELLEMENT (Pour débogage)
+================================================================================
+
+Terminal 1 - Kafka:
+   cd C:\tools\kafka_2.13-3.9.0\bin\windows
+   kafka-server-start.bat ..\..\config\kraft\server.properties
+
+   ⏳ Attendre ~30 sec jusqu'à voir: [ControllerServer id=1]
+
+Terminal 2 - Dashboard:
+   cd C:\BankingTransaction\Transaction
+   java -jar target\banking-kafka-1.0.0-jar-with-dependencies.jar
+
+Terminal 3 - Notification Consumer:
+   cd C:\BankingTransaction\Transaction
+   java -cp "target\banking-kafka-1.0.0-jar-with-dependencies.jar" Consumer.NotificationConsumer
+
+Terminal 4 - Fraud Detection (Optionnel):
+   cd C:\BankingTransaction\Transaction
+   java -cp "target\banking-kafka-1.0.0-jar-with-dependencies.jar" Consumer.FraudDetectionConsumer
+
+Terminal 5 - Audit Logger (Optionnel):
+   cd C:\BankingTransaction\Transaction
+   java -cp "target\banking-kafka-1.0.0-jar-with-dependencies.jar" Consumer.AuditLogConsumer
+
+================================================================================
+VÉRIFIER QUE TOUT FONCTIONNE
+================================================================================
+
+✓ Dashboard accessible:
+  → http://localhost:8080
+
+✓ Kafka connecté:
+  → Voir le badge "Kafka Connected — 127.0.0.1:9092" en haut
+
+✓ Authentification:
+  → Se connecter avec: admin / admin123
+
+✓ Emails activés:
+  → Envoyer une transaction
+  → Voir "📧 Email sent" dans Terminal 3 (Notification Consumer)
+  → Email reçu dans: projetpfa26@gmail.com
+
+✓ Détection fraude:
+  → Envoyer transaction avec montant > 50,000
+  → Voir transaction marquée "FRAUD" dans le dashboard
+  → Voir alerte dans Terminal 4 (Fraud Detection)
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+❌ Erreur: "Port 8080 déjà utilisé"
+→ Fermer les fenêtres existantes du Dashboard
+→ Vérifier avec: netstat -ano | findstr :8080
+→ Tuer le processus: taskkill /PID <PID> /F
+
+❌ Erreur: "Kafka not responding"
+→ Attendre 30-45 secondes de plus
+→ Vérifier que Terminal 1 (Kafka) s'affiche sans erreurs
+→ Vérifier que C:\tmp\kraft-combined-logs existe
+
+❌ Erreur: "ClassNotFoundException"
+→ Reconstruire le projet:
+  cd C:\BankingTransaction\Transaction
+  mvn clean package -DskipTests
+
+❌ Emails ne s'envoient pas
+→ Vérifier que Terminal 3 (Notification Consumer) s'affiche
+→ Chercher "[ERROR]" dans le terminal
+→ Vérifier que projetpfa26@gmail.com est accessible
+
+================================================================================
+ARRÊTER TOUS LES SERVICES
+================================================================================
+
+Option 1 (Rapide):
+→ Fermer toutes les fenêtres de terminal
+
+Option 2 (Propre):
+→ Dans chaque terminal, appuyer sur Ctrl+C
+→ Confirmer les prompts si necessaire
+
+Kafka mettra ~10 secondes à s'arrêter (c'est normal)
+
+================================================================================
+DÉMONSTRATION RECOMMANDÉE
+================================================================================
+
+1. Lancer tous les services avec START_ALL.bat
+2. Attendre 45 secondes
+3. Ouvrir navigateur: http://localhost:8080
+4. Se connecter: admin / admin123
+5. Montrer le dashboard:
+   - Statistiques en temps réel
+   - Logo TransactFlow
+   - Badge Kafka
+6. Envoyer une transaction:
+   - Remplir le formulaire
+   - Cliquer "Envoyer"
+   - Observer l'apparition immédiate dans le feed
+   - Voir le mail "sent" dans Terminal 3
+7. Créer une fraude (montant > 50,000):
+   - Envoyer transaction 100,000
+   - Observer "FRAUD" dans le dashboard
+   - Voir l'alerte dans Terminal 4
+   - Recevoir l'email dans projetpfa26@gmail.com
+
+================================================================================
+INFORMATIONS IMPORTANTES
+================================================================================
+
+Ports utilisés:
+  8080 - Dashboard HTTP
+  9092 - Kafka Broker
+  9093 - Kafka Controller
+
+Email d'envoi:
+  mahmoudelloumi@gmail.com
+
+Email de réception:
+  projetpfa26@gmail.com
+
+Credentials de test:
+  admin / admin123
+  mahmoud / kafka2026
+  operateur / bank@2026
+
+Durée de démarrage complet:
+  45-60 secondes
+
+================================================================================
+BESOIN D'AIDE?
+================================================================================
+
+- Vérifier les logs dans chaque terminal
+- Chercher [ERROR] ou [WARN] dans les logs
+- Essayer l'Option 3 (lancement manuel) pour voir les erreurs précises
+- Vérifier que Java 17+ est installé: java -version
+
+================================================================================
+
+Bonne présentation! 🎉
+

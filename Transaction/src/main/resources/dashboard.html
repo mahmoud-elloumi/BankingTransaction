@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banking Kafka Dashboard — Real-Time Transaction Monitoring</title>
+    <title>TransactFlow Dashboard — Real-Time Transaction Monitoring</title>
     <meta name="description" content="Real-time banking transaction monitoring dashboard powered by Apache Kafka">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=DM+Sans:wght@400;500&display=swap"
         rel="stylesheet">
     <style>
         *,
@@ -19,25 +19,25 @@
 
         :root {
             --bg-primary: #0a0e1a;
-            --bg-secondary: #111827;
-            --bg-card: rgba(17, 24, 39, 0.7);
-            --bg-glass: rgba(255, 255, 255, 0.03);
-            --border-glass: rgba(255, 255, 255, 0.08);
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --accent-blue: #3b82f6;
-            --accent-cyan: #06b6d4;
+            --bg-secondary: #0f1729;
+            --bg-card: rgba(15, 23, 42, 0.85);
+            --bg-glass: rgba(15, 23, 42, 0.7);
+            --border-glass: rgba(0, 180, 216, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --accent-blue: #00b4d8;
+            --accent-cyan: #48cae4;
             --accent-green: #10b981;
             --accent-red: #ef4444;
             --accent-orange: #f97316;
-            --accent-purple: #8b5cf6;
-            --accent-yellow: #eab308;
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.15);
-            --shadow-glow-green: 0 0 20px rgba(16, 185, 129, 0.15);
-            --shadow-glow-red: 0 0 20px rgba(239, 68, 68, 0.15);
-            --shadow-glow-orange: 0 0 20px rgba(249, 115, 22, 0.15);
+            --accent-purple: #0077b6;
+            --accent-yellow: #ca8a04;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --shadow-glow-blue: 0 4px 20px rgba(0, 180, 216, 0.2);
+            --shadow-glow-green: 0 4px 20px rgba(16, 185, 129, 0.2);
+            --shadow-glow-red: 0 4px 20px rgba(239, 68, 68, 0.2);
+            --shadow-glow-orange: 0 4px 20px rgba(249, 115, 22, 0.2);
             --radius: 16px;
             --radius-sm: 10px;
         }
@@ -59,9 +59,9 @@
             width: 200%;
             height: 200%;
             background:
-                radial-gradient(ellipse at 20% 50%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 80%, rgba(6, 182, 212, 0.04) 0%, transparent 50%);
+                radial-gradient(ellipse at 20% 50%, rgba(0, 180, 216, 0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 119, 182, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(72, 202, 228, 0.04) 0%, transparent 50%);
             animation: bgFloat 20s ease-in-out infinite;
             z-index: 0;
             pointer-events: none;
@@ -93,7 +93,7 @@
             justify-content: space-between;
             border-bottom: 1px solid var(--border-glass);
             backdrop-filter: blur(20px);
-            background: rgba(10, 14, 26, 0.8);
+            background: rgba(10, 14, 26, 0.95);
         }
 
         .header-left {
@@ -103,24 +103,31 @@
         }
 
         .logo {
-            width: 44px;
-            height: 44px;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            border-radius: 12px;
+            width: 50px;
+            height: 50px;
+            background: none;
+            border-radius: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
             font-weight: 800;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            box-shadow: none;
+        }
+
+        .logo svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 12px rgba(0, 180, 216, 0.25));
         }
 
         .header-title {
-            font-size: 20px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+            font-size: 22px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            font-family: 'Outfit', sans-serif;
         }
 
         .header-subtitle {
@@ -433,7 +440,7 @@
         .form-group select {
             width: 100%;
             padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(0, 0, 0, 0.02);
             border: 1px solid var(--border-glass);
             border-radius: var(--radius-sm);
             color: var(--text-primary);
@@ -454,8 +461,8 @@
         }
 
         .form-group select option {
-            background: #1e293b;
-            color: #f1f5f9;
+            background: #ffffff;
+            color: #1e293b;
             padding: 8px;
         }
 
@@ -484,14 +491,14 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
             color: white;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.25);
+            box-shadow: 0 4px 20px rgba(0, 180, 216, 0.3);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+            box-shadow: 0 8px 30px rgba(0, 180, 216, 0.4);
         }
 
         .btn-primary:active {
@@ -535,12 +542,12 @@
         }
 
         .feed-panel::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.15);
             border-radius: 3px;
         }
 
         .tx-card {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(0, 0, 0, 0.015);
             border: 1px solid var(--border-glass);
             border-radius: var(--radius-sm);
             padding: 18px;
@@ -562,8 +569,8 @@
         }
 
         .tx-card:hover {
-            border-color: rgba(255, 255, 255, 0.12);
-            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(0, 0, 0, 0.12);
+            background: rgba(0, 0, 0, 0.02);
         }
 
         .tx-card.status-APPROVED {
@@ -843,15 +850,52 @@
     <!-- Header -->
     <header class="header">
         <div class="header-left">
-            <div class="logo">BK</div>
+            <div class="logo">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="dashgrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00b4d8"/>
+                            <stop offset="50%" style="stop-color:#0077b6"/>
+                            <stop offset="100%" style="stop-color:#023e8a"/>
+                        </linearGradient>
+                        <linearGradient id="dashgrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#90e0ef"/>
+                            <stop offset="100%" style="stop-color:#00b4d8"/>
+                        </linearGradient>
+                        <linearGradient id="dashgrad3" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#0096c7"/>
+                            <stop offset="100%" style="stop-color:#48cae4"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M100 18 L170 55 L170 110 C170 145 140 175 100 190 C60 175 30 145 30 110 L30 55 Z"
+                          fill="none" stroke="url(#dashgrad1)" stroke-width="2.5" stroke-linejoin="round"/>
+                    <path d="M100 28 L162 60 L162 108 C162 139 135 166 100 180 C65 166 38 139 38 108 L38 60 Z"
+                          fill="url(#dashgrad1)" opacity="0.08"/>
+                    <g transform="translate(100,105)">
+                        <path d="M-5 -38 C25 -38, 38 -20, 38 0 C38 18, 25 34, 5 38"
+                              fill="none" stroke="url(#dashgrad2)" stroke-width="3.5" stroke-linecap="round"/>
+                        <polygon points="8,32 2,42 12,40" fill="#90e0ef"/>
+                        <path d="M5 38 C-25 38, -38 20, -38 0 C-38 -18, -25 -34, -5 -38"
+                              fill="none" stroke="url(#dashgrad3)" stroke-width="3.5" stroke-linecap="round"/>
+                        <polygon points="-8,-32 -2,-42 -12,-40" fill="#48cae4"/>
+                        <circle cx="0" cy="0" r="6" fill="#00b4d8"/>
+                    </g>
+                </svg>
+            </div>
             <div>
-                <div class="header-title">Banking Kafka Dashboard</div>
+                <div class="header-title">TransactFlow Dashboard</div>
                 <div class="header-subtitle">Real-Time Transaction Monitoring & Fraud Detection</div>
             </div>
         </div>
-        <div class="kafka-badge">
-            <span class="dot"></span>
-            Kafka Connected — 127.0.0.1:9092
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div class="kafka-badge">
+                <span class="dot"></span>
+                Kafka Connected — 127.0.0.1:9092
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 6px 14px; background: rgba(255,255,255,0.1); border-radius: 24px; border: 1px solid rgba(255,255,255,0.2);">
+                <span style="font-size: 13px; color: #ffffff; font-weight: 500;">👤 <span id="currentUser">Utilisateur</span></span>
+                <button onclick="logout()" style="background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.15); color: #ef4444; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">Déconnexion</button>
+            </div>
         </div>
     </header>
 
@@ -881,98 +925,7 @@
             </div>
         </div>
 
-        <!-- Architecture Diagram -->
-        <div class="architecture-section">
-            <div class="section-title"><span>🏗️</span> Architecture Kafka — Flux de Traitement (4 Consumers)</div>
 
-            <!-- Row 1: Producer → Kafka Pending -->
-            <div class="architecture-flow">
-                <div class="arch-node producer">
-                    📤 Producer / Dashboard<br>
-                    <small>API REST + TransactionProducer</small>
-                </div>
-                <div class="arch-arrow">→</div>
-                <div class="arch-node kafka">
-                    📡 Topic: pending<br>
-                    <small>bank.transactions.pending</small>
-                </div>
-                <div class="arch-arrow">→</div>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div class="arch-node consumer">
-                        ✅ TransactionConsumer<br>
-                        <small>Validation → approved / rejected</small>
-                    </div>
-                    <div class="arch-node fraud">
-                        🚨 FraudDetectionConsumer<br>
-                        <small>Analyse fraude → fraud</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Separator -->
-            <div
-                style="text-align: center; padding: 8px 0; color: var(--text-muted); font-size: 22px; animation: arrowPulse 1.5s ease-in-out infinite;">
-                ↓</div>
-
-            <!-- Row 2: Downstream Topics -->
-            <div class="architecture-flow">
-                <div class="arch-node consumer" style="background: rgba(16, 185, 129, 0.08); min-width: 140px;">
-                    ✅ Topic: approved<br>
-                    <small>bank.transactions.approved</small>
-                </div>
-                <div class="arch-node"
-                    style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--accent-red); min-width: 140px;">
-                    ❌ Topic: rejected<br>
-                    <small>bank.transactions.rejected</small>
-                </div>
-                <div class="arch-node fraud" style="min-width: 140px;">
-                    🚨 Topic: fraud<br>
-                    <small>bank.transactions.fraud</small>
-                </div>
-            </div>
-
-            <!-- Separator -->
-            <div
-                style="text-align: center; padding: 8px 0; color: var(--text-muted); font-size: 22px; animation: arrowPulse 1.5s ease-in-out infinite;">
-                ↓</div>
-
-            <!-- Row 3: Downstream Consumers -->
-            <div class="architecture-flow">
-                <div class="arch-node"
-                    style="background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.3); color: var(--accent-yellow); min-width: 180px;">
-                    📧 NotificationConsumer<br>
-                    <small>Envoi emails SMTP Gmail</small>
-                </div>
-                <div class="arch-node"
-                    style="background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.3); color: var(--accent-purple); min-width: 180px;">
-                    📋 AuditLogConsumer<br>
-                    <small>Journal CSV (audit-log.csv)</small>
-                </div>
-                <div class="arch-node producer"
-                    style="background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.3); color: var(--accent-cyan); min-width: 180px;">
-                    📊 Dashboard<br>
-                    <small>Résultats en temps réel</small>
-                </div>
-            </div>
-
-            <!-- Consumer Groups Legend -->
-            <div
-                style="margin-top: 16px; padding: 14px 18px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid var(--border-glass);">
-                <div
-                    style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
-                    Consumer Groups Kafka</div>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-                    <span
-                        style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); color: var(--accent-green); border: 1px solid rgba(16, 185, 129, 0.2); font-weight: 600; font-family: 'JetBrains Mono', monospace;">bank-transaction-validator</span>
-                    <span
-                        style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(249, 115, 22, 0.1); color: var(--accent-orange); border: 1px solid rgba(249, 115, 22, 0.2); font-weight: 600; font-family: 'JetBrains Mono', monospace;">bank-fraud-detector</span>
-                    <span
-                        style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(234, 179, 8, 0.1); color: var(--accent-yellow); border: 1px solid rgba(234, 179, 8, 0.2); font-weight: 600; font-family: 'JetBrains Mono', monospace;">bank-notification-service</span>
-                    <span
-                        style="font-size: 11px; padding: 4px 10px; border-radius: 6px; background: rgba(139, 92, 246, 0.1); color: var(--accent-purple); border: 1px solid rgba(139, 92, 246, 0.2); font-weight: 600; font-family: 'JetBrains Mono', monospace;">bank-audit-logger</span>
-                </div>
-            </div>
-        </div>
 
         <!-- Main Grid: Form + Feed -->
         <div class="main-grid">
@@ -983,44 +936,45 @@
                 <form id="txForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Sender ID</label>
-                            <input type="text" id="senderId" placeholder="ex: ACC-001" value="ACC-001">
+                            <label>Compte Expéditeur</label>
+                            <input type="text" id="senderId" placeholder="ex: ACC-001" required>
                         </div>
                         <div class="form-group">
-                            <label>Receiver ID</label>
-                            <input type="text" id="receiverId" placeholder="ex: ACC-002" value="ACC-002">
+                            <label>Compte Destinataire</label>
+                            <input type="text" id="receiverId" placeholder="ex: ACC-002">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Montant</label>
-                            <input type="number" id="amount" placeholder="1500.00" step="0.01" value="1500">
+                            <input type="number" id="amount" placeholder="0.00" step="0.01" min="0.01" required>
                         </div>
                         <div class="form-group">
                             <label>Devise</label>
-                            <input type="text" id="currency" value="EUR" placeholder="EUR">
+                            <select id="currency">
+                                <option value="TND">TND</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                            </select>
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Type</label>
                         <select id="type">
-                            <option value="TRANSFER">🔄 Transfer</option>
-                            <option value="PAYMENT">💳 Payment</option>
-                            <option value="WITHDRAWAL">🏧 Withdrawal</option>
-                            <option value="DEPOSIT">💰 Deposit</option>
+                            <option value="TRANSFER">🔄 Virement</option>
+                            <option value="PAYMENT">💳 Paiement</option>
+                            <option value="WITHDRAWAL">🏧 Retrait</option>
+                            <option value="DEPOSIT">💰 Dépôt</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Description</label>
-                        <input type="text" id="description" placeholder="Ex: Paiement loyer" value="Transaction test">
+                        <input type="text" id="description" placeholder="Ex: Paiement loyer mars 2026">
                     </div>
                     <button type="submit" class="btn btn-primary" id="btnSend">
-                        📤 Envoyer au Kafka Topic
+                        📤 Envoyer la Transaction
                     </button>
                 </form>
-                <button class="btn btn-demo" id="btnDemo" onclick="sendDemo()">
-                    🎬 Lancer Démo (5 transactions)
-                </button>
             </div>
 
             <!-- Transactions Feed -->
@@ -1035,7 +989,7 @@
                     <div class="empty-state">
                         <div class="icon">📭</div>
                         <p>Aucune transaction traitée pour le moment.<br>
-                            Envoyez une transaction ou lancez la démo !</p>
+                            Envoyez une transaction pour commencer.</p>
                     </div>
                 </div>
             </div>
@@ -1047,6 +1001,28 @@
 
     <script>
         const API = '';
+
+        // ─── Session Check ───────────────────────────────────────────────
+        const authToken = sessionStorage.getItem('authToken');
+        const username = sessionStorage.getItem('username');
+        if (!authToken) {
+            window.location.href = '/';
+        } else {
+            document.getElementById('currentUser').textContent = username || 'Utilisateur';
+        }
+
+        function getAuthHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + (sessionStorage.getItem('authToken') || '')
+            };
+        }
+
+        function logout() {
+            sessionStorage.removeItem('authToken');
+            sessionStorage.removeItem('username');
+            window.location.href = '/';
+        }
 
         // ─── Form Submit ─────────────────────────────────────────────────
         document.getElementById('txForm').addEventListener('submit', async (e) => {
@@ -1067,12 +1043,14 @@
             try {
                 const res = await fetch(API + '/api/send', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getAuthHeaders(),
                     body: JSON.stringify(payload)
                 });
+                if (res.status === 401) { logout(); return; }
                 const data = await res.json();
                 if (data.success) {
                     showToast('success', `✅ Transaction envoyée: ${data.transactionId.substring(0, 8)}...`);
+                    document.getElementById('txForm').reset();
                 } else {
                     showToast('error', `❌ Erreur: ${data.error}`);
                 }
@@ -1081,36 +1059,18 @@
             }
 
             btn.classList.remove('loading');
-            btn.innerHTML = '📤 Envoyer au Kafka Topic';
+            btn.innerHTML = '📤 Envoyer la Transaction';
         });
-
-        // ─── Demo Button ─────────────────────────────────────────────────
-        async function sendDemo() {
-            const btn = document.getElementById('btnDemo');
-            btn.classList.add('loading');
-            btn.textContent = '⏳ Envoi de 5 transactions...';
-
-            try {
-                const res = await fetch(API + '/api/demo', { method: 'POST' });
-                const data = await res.json();
-                if (data.success) {
-                    showToast('success', `🎬 ${data.message}`);
-                }
-            } catch (err) {
-                showToast('error', `❌ ${err.message}`);
-            }
-
-            btn.classList.remove('loading');
-            btn.innerHTML = '🎬 Lancer Démo (5 transactions)';
-        }
 
         // ─── Polling ─────────────────────────────────────────────────────
         let lastCount = 0;
 
         async function refresh() {
             try {
+                const headers = getAuthHeaders();
                 // Stats
-                const statsRes = await fetch(API + '/api/stats');
+                const statsRes = await fetch(API + '/api/stats', { headers });
+                if (statsRes.status === 401) { logout(); return; }
                 const stats = await statsRes.json();
                 animateValue('stat-sent', stats.totalSent);
                 animateValue('stat-approved', stats.totalApproved);
@@ -1118,7 +1078,8 @@
                 animateValue('stat-flagged', stats.totalFlagged);
 
                 // Transactions
-                const txRes = await fetch(API + '/api/transactions');
+                const txRes = await fetch(API + '/api/transactions', { headers });
+                if (txRes.status === 401) { logout(); return; }
                 const txs = await txRes.json();
 
                 if (txs.length !== lastCount) {
@@ -1148,7 +1109,7 @@
                     <div class="empty-state">
                         <div class="icon">📭</div>
                         <p>Aucune transaction traitée pour le moment.<br>
-                        Envoyez une transaction ou lancez la démo !</p>
+                        Envoyez une transaction pour commencer.</p>
                     </div>`;
                 return;
             }
