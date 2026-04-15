@@ -1,769 +1,109 @@
-================================================================================
-                      RAPPORT DU PROJET TRANSACTFLOW
-        Real-Time Banking Transaction Monitoring System with Apache Kafka
-================================================================================
-
-Date: 29 Mars 2026
-Version: 1.0.0
-Statut: Production Ready ✓
+Banking Kafka — Système de Transactions Bancaires en Temps Réel
 
 ================================================================================
-1. VUE D'ENSEMBLE
-================================================================================
 
-Titre du Projet:
-    TransactFlow - Real-Time Banking Transaction Monitoring System
+1. Objectif du Projet
 
-Objectif:
-    Créer un système de surveillance en temps réel des transactions bancaires
-    utilisant Apache Kafka comme middleware de messaging et un dashboard web
-    interactif pour visualiser et gérer les données de transactions.
+Ce projet implémente un système de traitement de transactions bancaires en temps
+réel utilisant Apache Kafka comme middleware de messagerie.
 
-Description:
-    Le projet implémente une architecture événementielle complète permettant:
-    - L'authentification sécurisée des utilisateurs
-    - L'envoi et le suivi des transactions en temps réel
-    - La détection automatique des fraudes
-    - Les notifications par email
-    - L'audit et le logging des opérations
-    - Un dashboard web moderne et responsif
-
-Status: ✓ Fonctionnel et prêt pour la présentation
-
-================================================================================
-2. ARCHITECTURE SYSTÈME
-================================================================================
-
-DIAGRAMME D'ARCHITECTURE:
-
-┌─────────────────────────────────────────────────────────┐
-│                    CLIENT (Navigateur)                  │
-│              ┌──────────────────────────┐               │
-│              │   Dashboard HTML/CSS/JS   │               │
-│              │   Login Page + UI Modern  │               │
-│              └────────────┬─────────────┘               │
-└─────────────────────────────────────────────────────────┘
-                    ↓ HTTP (Port 8080)
-┌─────────────────────────────────────────────────────────┐
-│              DashboardServer (Java 17)                  │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ • HTTP Server (com.sun.net.httpserver)          │   │
-│  │ • Session Management (Token UUID)               │   │
-│  │ • Authentication & Authorization                │   │
-│  │ • REST API Endpoints (/api/*)                   │   │
-│  └──────────────────┬──────────────────────────────┘   │
-│                     ↓ Kafka Protocol
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ Kafka Producer/Consumer                         │   │
-│  │ • BankTransaction Serialization (JSON)          │   │
-│  │ • Multiple Topics Management                    │   │
-│  └─────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-                    ↓ Kafka Port 9092
-┌─────────────────────────────────────────────────────────┐
-│              Apache Kafka 3.9 (KRaft Mode)              │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ Topics Kafka:                                   │   │
-│  │ • bank.transactions.pending                     │   │
-│  │ • bank.transactions.approved                    │   │
-│  │ • bank.transactions.rejected                    │   │
-│  │ • bank.transactions.fraud                       │   │
-│  └─────────────────────────────────────────────────┘   │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ Consommateurs Kafka:                            │   │
-│  │ • NotificationConsumer (Email via Gmail SMTP)   │   │
-│  │ • AuditLogConsumer (Logging & Audit Trail)      │   │
-│  │ • FraudDetectionConsumer (Real-time Analysis)   │   │
-│  │ • DashboardConsumer (UI Updates)                │   │
-│  └─────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-
-================================================================================
-3. TECHNOLOGIES UTILISÉES
-================================================================================
-
-BACKEND:
---------
-- Java 17 (JDK 17+)
-- Apache Kafka 3.6.1
-- Jackson 2.16.1 (JSON Serialization)
-- Jakarta Mail 2.0.1 (SMTP Email)
-- SLF4J + Logback (Logging)
-- Maven 3.x (Build Management)
-- com.sun.net.httpserver (HTTP Server Java natif)
-
-FRONTEND:
---------
-- HTML5
-- CSS3 (Glassmorphism, Dark Theme, Animations)
-- JavaScript ES6+ (Vanilla JS, no frameworks)
-- Fetch API (HTTP Requests)
-
-DESIGN & UI:
------------
-- Fonts: Outfit (Headings), DM Sans (Subtitles), Inter (Body)
-- Color Palette: Cyan (#00b4d8), Dark Blue (#0077b6), Navy (#023e8a)
-- Animations: CSS Keyframes, Smooth Transitions
-- Responsive: Mobile-first, Glassmorphism effects
-- Dark Theme moderne avec gradients
-
-================================================================================
-4. FEATURES IMPLÉMENTÉES
-================================================================================
-
-4.1 PAGE DE CONNEXION (Login Page)
-----------------------------------
-✓ Formulaire d'authentification moderne et sécurisé
-✓ Validation des credentials côté serveur et client
-✓ Gestion des sessions avec tokens UUID
-✓ Messages d'erreur animés et explicites
-✓ Toggle password visibility
-✓ Loading state avec spinner CSS
-✓ Design TransactFlow avec logo animé SVG
-✓ Redirection automatique au dashboard après connexion
-✓ Support de multiples comptes utilisateur
-
-4.2 DASHBOARD PRINCIPAL
------------------------
-✓ STATISTIQUES EN TEMPS RÉEL:
-  - Transactions envoyées
-  - Transactions approuvées
-  - Transactions rejetées
-  - Taux de fraude détectée
-  - Mise à jour automatique
-
-✓ FORMULAIRE D'ENVOI DE TRANSACTION:
-  - Sélection du bénéficiaire
-  - Montant avec validation
-  - Type de transaction (Virement, Retrait, Dépôt)
-  - Soumission en temps réel via Kafka
-  - Feedback utilisateur immédiat
-
-✓ FEED DE TRANSACTIONS EN TEMPS RÉEL:
-  - Affichage live des transactions
-  - Filtrage par statut (Approuvée, Rejetée, Fraude)
-  - Timestamps et détails complets
-  - Auto-refresh toutes les 2 secondes
-  - Limite d'affichage des 50 dernières transactions
-
-✓ DÉTECTION DE FRAUDE:
-  - Visualisation des transactions suspectes
-  - Alertes avec montants anormaux (>50,000)
-  - Scoring de risque automatique
-  - Notifications en temps réel
-
-✓ HEADER PERSONNALISÉ:
-  - Logo TransactFlow animé (SVG avec gradients)
-  - Titre du dashboard
-  - Badge Kafka (status connexion 127.0.0.1:9092)
-  - Affichage utilisateur connecté (blanc)
-  - Bouton déconnexion (rouge)
-  - Navbar foncée (#0a0e1a) avec glassmorphism
-
-================================================================================
-5. STRUCTURE DU PROJET
-================================================================================
-
-Transaction/
-├── src/main/
-│   ├── java/
-│   │   ├── web/
-│   │   │   └── DashboardServer.java (POINT D'ENTRÉE ⭐)
-│   │   │       - HTTP Server sur port 8080
-│   │   │       - Kafka Producer/Consumer
-│   │   │       - Session Management
-│   │   │       - REST API Endpoints
-│   │   │       - Gestion des authentifications
-│   │   │
-│   │   ├── model/
-│   │   │   └── BankTransaction.java
-│   │   │       - Transaction ID
-│   │   │       - Amount, Type, Status
-│   │   │       - Timestamp, Beneficiary
-│   │   │       - Enums: TransactionType, Status
-│   │   │
-│   │   ├── serialization/
-│   │   │   ├── BankTransactionSerializer.java
-│   │   │   └── BankTransactionDeserializer.java
-│   │   │
-│   │   └── consumer/
-│   │       ├── NotificationConsumer.java
-│   │       ├── AuditLogConsumer.java
-│   │       ├── FraudDetectionConsumer.java
-│   │       └── DashboardConsumer.java
-│   │
-│   └── resources/
-│       ├── login.html (Page de connexion - 463 lignes)
-│       ├── dashboard.html (Dashboard principal - 1050+ lignes)
-│       └── logback.xml (Logging configuration)
-│
-├── pom.xml (Maven configuration)
-└── target/
-    └── banking-kafka-1.0.0-jar-with-dependencies.jar
-
-================================================================================
-6. AUTHENTIFICATION & CREDENTIALS
-================================================================================
-
-Système d'Authentification:
-- Authentification par nom d'utilisateur et mot de passe
-- Validation côté serveur
-- Génération de token UUID après connexion
-- Stockage des sessions en mémoire (ConcurrentHashMap)
-- Timeout de session géré par le serveur
-
-COMPTES DE TEST DISPONIBLES:
-
-┌──────────────┬────────────┬──────────────────┐
-│ Utilisateur  │ Mot passe  │ Rôle             │
-├──────────────┼────────────┼──────────────────┤
-│ admin        │ admin123   │ Administrateur   │
-│ mahmoud      │ kafka2026  │ Utilisateur      │
-│ operateur    │ bank@2026  │ Opérateur        │
-└──────────────┴────────────┴──────────────────┘
-
-================================================================================
-7. API REST ENDPOINTS
-================================================================================
-
-┌─────────┬──────────────────────┬──────────────────────────────────┐
-│ Méthode │ Endpoint             │ Description                      │
-├─────────┼──────────────────────┼──────────────────────────────────┤
-│ POST    │ /api/login           │ Authentification utilisateur      │
-│ POST    │ /api/send            │ Envoyer une transaction          │
-│ GET     │ /api/transactions    │ Récupérer les transactions       │
-│ GET     │ /api/stats           │ Récupérer les statistiques       │
-│ POST    │ /api/logout          │ Déconnexion                      │
-└─────────┴──────────────────────┴──────────────────────────────────┘
-
-EXEMPLE DE REQUÊTE LOGIN:
-
-POST http://localhost:8080/api/login
-Content-Type: application/json
-
-{
-  "username": "admin",
-  "password": "admin123"
-}
-
-RÉPONSE:
-
-HTTP 200 OK
-{
-  "success": true,
-  "token": "7024561b-42c7-4827-a496-7c23140c1508",
-  "message": "Connexion réussie",
-  "username": "admin"
-}
-
-================================================================================
-8. THÈME & DESIGN
-================================================================================
-
-PALETTE DE COULEURS:
-
-Couleurs Primaires:
-  - #0a0e1a (Dark Navy - Fond principal)
-  - #0f1729 (Dark Blue - Cartes)
-  - #ffffff (White - Texte primaire)
-  - #cbd5e1 (Light Gray - Texte secondaire)
-
-Couleurs Accent:
-  - #00b4d8 (Bright Cyan - Accent principal)
-  - #0077b6 (Navy Blue - Accent secondaire)
-  - #023e8a (Dark Navy - Accent tertiaire)
-  - #90e0ef (Light Cyan - Highlight)
-  - #48cae4 (Cyan Light - Border)
-
-Couleurs Feedback:
-  - #10b981 (Green - Success)
-  - #ef4444 (Red - Error/Fraud)
-  - #f97316 (Orange - Warning)
-  - #ca8a04 (Yellow - Info)
-
-CARACTÉRISTIQUES DESIGN:
-
-✓ Dark Theme moderne
-✓ Glassmorphism avec backdrop-filter blur(20px)
-✓ Animations fluides CSS Keyframes
-✓ Responsive design mobile-first
-✓ Accessibilité améliorée (contrast ratios)
-✓ Logo SVG animé TransactFlow
-✓ Gradients linéaires et radiaux
-✓ Ombres subtiles avec glow effects
-✓ Transitions smooth (0.25s cubic-bezier)
-✓ Radius cohérents (16px, 10px)
-
-================================================================================
-9. INSTRUCTIONS DE LANCEMENT
-================================================================================
-
-PRÉREQUIS:
-----------
-✓ Java 17+ installé
-✓ Apache Kafka 3.9+ configuré
-✓ Maven 3.x installé
-✓ Navigateur moderne (Chrome, Firefox, Edge)
-✓ Port 8080 disponible (Dashboard)
-✓ Port 9092 disponible (Kafka)
-
-ÉTAPES DE LANCEMENT:
-
-1. DÉMARRER KAFKA:
-   -----------------
-   cd C:\tools\kafka_2.13-3.9.0\bin\windows
-   kafka-server-start.bat ..\..\config\kraft\server.properties
-
-   ⏳ Attendre le message: [ControllerServer id=1] (~30 secondes)
-
-2. LANCER L'APPLICATION:
-   ----------------------
-   cd C:\BankingTransaction\Transaction
-   java -jar target/banking-kafka-1.0.0-jar-with-dependencies.jar
-
-   ✓ Le serveur se lance sur http://localhost:8080
-
-3. ACCÉDER AU DASHBOARD:
-   ----------------------
-   Ouvrir le navigateur: http://localhost:8080
-
-   ✓ La page de login TransactFlow s'affiche
-
-4. SE CONNECTER:
-   ---------------
-   Utiliser l'un des comptes de test:
-   - admin / admin123
-   - mahmoud / kafka2026
-   - operateur / bank@2026
-
-5. EXPLORER LE DASHBOARD:
-   -----------------------
-   ✓ Voir les statistiques en temps réel
-   ✓ Envoyer une transaction
-   ✓ Observer le feed en temps réel
-   ✓ Filtrer les transactions
-   ✓ Voir la détection de fraude
-
-6. ARRÊTER LE SERVEUR:
-   -------------------
-   Dashboard: Appuyer sur Ctrl+C dans le terminal
-   Kafka: Appuyer sur Ctrl+C dans le terminal Kafka
-
-================================================================================
-10. FLUX DE DONNÉES KAFKA
-================================================================================
-
-PIPELINE DE TRANSACTION:
-
-User Action (Envoyer Transaction)
-              ↓
-        DashboardServer (HTTP POST /api/send)
-              ↓
-    ┌─────────┴──────────┐
-    ↓                    ↓
-Kafka Producer      Kafka Topics
-    │               ├── bank.transactions.pending
-    │               ├── bank.transactions.approved
-    │               ├── bank.transactions.rejected
-    │               └── bank.transactions.fraud
-    ↓
-Kafka Consumers:
-├── NotificationConsumer → Email SMTP (Gmail)
-├── AuditLogConsumer → Log files & Audit trail
-├── FraudDetectionConsumer → Risk scoring
-└── DashboardConsumer → WebSocket/Polling Update
-    ↓
-  Frontend Dashboard (Real-time Feed Update)
-
-TOPICS KAFKA CRÉÉS:
-
-1. bank.transactions.pending
-   - Transactions en attente de traitement
-   - Partitions: 1
-   - Replication Factor: 1
-
-2. bank.transactions.approved
-   - Transactions approuvées
-   - Partitions: 1
-   - Replication Factor: 1
-
-3. bank.transactions.rejected
-   - Transactions rejetées
-   - Partitions: 1
-   - Replication Factor: 1
-
-4. bank.transactions.fraud
-   - Transactions détectées comme frauduleuses
-   - Partitions: 1
-   - Replication Factor: 1
-
-CONSOMMATEURS KAFKA IMPLÉMENTÉS:
-
-1. NotificationConsumer
-   - Envoie des emails via Gmail SMTP
-   - Authentification sécurisée
-   - Templates d'email personnalisés
-   - Gestion des erreurs d'envoi
-
-2. AuditLogConsumer
-   - Enregistre tous les événements
-   - Logs structurés en JSON
-   - Timestamped pour traçabilité
-   - Sauvegarde en fichiers
-
-3. FraudDetectionConsumer
-   - Analyse en temps réel
-   - Scoring de risque
-   - Détection montants anormaux (>50,000)
-   - Alertes automatiques
-
-4. DashboardConsumer
-   - Met à jour les statistiques
-   - Rafraîchit le feed en temps réel
-   - Agrège les données
-   - Communique avec le frontend
-
-================================================================================
-11. CONFIGURATION TECHNIQUE
-================================================================================
-
-PORTS UTILISÉS:
-
-8080   - HTTP Dashboard Server (Frontend)
-9092   - Kafka Broker PLAINTEXT (Message streaming)
-9093   - Kafka KRaft Controller (Internal communication)
-
-DÉPENDANCES MAVEN:
-
-- org.apache.kafka:kafka-clients:3.6.1
-- com.fasterxml.jackson.core:jackson-databind:2.16.1
-- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1
-- com.sun.mail:jakarta.mail:2.0.1
-- org.slf4j:slf4j-api:2.0.12
-- ch.qos.logback:logback-classic:1.4.14
-
-CONFIGURATION KAFKA:
-
-- Mode: KRaft (sans ZooKeeper)
-- Broker ID: 1
-- Controller ID: 1
-- Listeners: 127.0.0.1:9092
-- Log Dir: C:\tmp\kraft-combined-logs
-- Clean Shutdown: Activé
-- Auto Topic Creation: Activé
-
-CONFIGURATION JAVA:
-
-- Version: 17
-- Encoding: UTF-8
-- Memory: Par défaut (ajustable via -Xmx)
-- GC: Default garbage collector
-
-================================================================================
-12. PERFORMANCE & SCALABILITÉ
-================================================================================
-
-MÉTRIQUES DE PERFORMANCE:
-
-Latence:
-- Requête HTTP: < 500ms
-- Traitement Kafka: < 100ms
-- Refresh Dashboard: 2 secondes
-
-Throughput:
-- Transactions par seconde: 100+ TPS (configurable)
-- Requêtes HTTP concurrentes: 100+
-- Consommateurs parallèles: 4
-
-Ressources:
-- Mémoire JVM: ~512 MB (par défaut)
-- CPU: Minimal (< 5% usage)
-- Disque Kafka: ~1 GB (initial)
-
-SCALABILITÉ:
-
-✓ Architecture basée sur events (Kafka)
-✓ Producteur/Consommateur découplés
-✓ Horizontalement scalable (ajouter brokers Kafka)
-✓ Verticalement scalable (augmenter JVM memory)
-✓ Partitions Kafka pour parallélisation
-✓ Consommateurs indépendants
-
-================================================================================
-13. AMÉLIORATIONS & FIXES APPLIQUÉS
-================================================================================
-
-FIX 1: MANIFEST JAR
--------------------
-Problème: ClassNotFoundException au lancement
-Solution: Ajout de <mainClass>web.DashboardServer</mainClass> dans pom.xml
-Résultat: JAR exécutable directement avec java -jar
-
-FIX 2: INPUT FOCUS VISIBILITY
------------------------------
-Problème: Texte blanc invisible sur fond blanc au focus
-Solution: Changement background à rgba(0, 180, 216, 0.08) (bleu transparent)
-Résultat: Texte blanc visible sur fond bleu clair
-
-FIX 3: NAVBAR DESIGN
--------------------
-Problème: Header blanc ne correspondait pas au design foncé
-Solution: Changement background de rgba(255,255,255,0.9) à rgba(10,14,26,0.95)
-Résultat: Navbar foncée cohérente avec le design TransactFlow
-
-FIX 4: USERNAME DISPLAY
------------------------
-Problème: Nom d'utilisateur presque invisible
-Solution: Changement couleur à blanc (#ffffff) avec fond transparent
-Résultat: Username clairement visible sur navbar foncée
-
-FIX 5: DARK THEME CONSISTENCY
-------------------------------
-Problème: Incohérence de couleurs entre pages
-Solution: Application cohérente de la palette TransactFlow partout
-Résultat: Design unifié login + dashboard
-
-================================================================================
-14. TESTS & VALIDATION
-================================================================================
-
-CHECKLIST DE VALIDATION FONCTIONNELLE:
-
-✓ Login avec 3 comptes différents (admin, mahmoud, operateur)
-✓ Envoi de transactions depuis le dashboard
-✓ Affichage en temps réel du feed de transactions
-✓ Filtrage des transactions par statut
-✓ Mise à jour des statistiques en temps réel
-✓ Détection de fraude (montants > 50,000)
-✓ Notifications email envoyées (vérifiable dans logs)
-✓ Déconnexion et redirection au login
-✓ Sessions isolées (chaque utilisateur a sa session)
-✓ Gestion des erreurs et messages d'erreur
-✓ Timeout de session après inactivité
-✓ Design responsive sur mobile et desktop
-
-TESTS BROWSER:
-
-✓ Google Chrome 120+ (Chromium)
-✓ Mozilla Firefox 121+
-✓ Microsoft Edge 121+
-✓ Safari (compatible)
-
-TESTS DE CHARGE:
-
-- 100+ TPS sans dégradation
-- 50+ utilisateurs simultanés
-- Kafka gère jusqu'à 1000+ messages/sec
-
-================================================================================
-15. DOCUMENTATION & CODE
-================================================================================
-
-✓ Code bien commenté et structuré
-✓ Classes documentées avec JavaDoc
-✓ API RESTful conforme aux standards
-✓ Logs détaillés (SLF4J) avec niveaux DEBUG/INFO/WARN/ERROR
-✓ Messages d'erreur explicites au frontend
-✓ Exception handling complet
-✓ Configuration externalisée
-✓ Exemple de requêtes API
-
-FILES DU PROJET:
-
-- DashboardServer.java: ~500 lignes
-- BankTransaction.java: ~100 lignes
-- Serializers: ~200 lignes
-- Consumers: ~400 lignes
-- login.html: ~463 lignes
-- dashboard.html: ~1050+ lignes
-- CSS + JavaScript intégrés: ~2000+ lignes
-
-TOTAL: ~5000+ lignes de code
-
-================================================================================
-16. POINTS D'APPRENTISSAGE CLÉS
-================================================================================
-
-Ce projet démontre les concepts suivants:
-
-1. EVENT-DRIVEN ARCHITECTURE
-   - Système basé sur les événements
-   - Découplage producteur/consommateur
-   - Traitement asynchrone
-
-2. APACHE KAFKA
-   - Configuration KRaft
-   - Topics et Partitions
-   - Producer/Consumer API
-   - Sérialisation JSON
-
-3. ARCHITECTURE WEB
-   - HTTP Server Java natif
-   - REST API design
-   - Session management
-   - Token-based authentication
-
-4. FRONTEND MODERNE
-   - Dark theme design
-   - Glassmorphism CSS
-   - Animations fluides
-   - Responsive design
-   - Vanilla JavaScript (pas de framework)
-
-5. REAL-TIME UPDATES
-   - Polling client-side
-   - Auto-refresh dashboard
-   - Live feed updates
-   - Statistiques en temps réel
-
-6. DÉTECTION DE FRAUDE
-   - Pattern matching
-   - Scoring de risque
-   - Montants anormaux
-   - Alertes en temps réel
-
-7. NOTIFICATIONS
-   - Email SMTP (Gmail)
-   - Authentification sécurisée
-   - Templates personnalisés
-
-8. MAVEN & BUILD
-   - Multi-module project
-   - Fat JAR (with dependencies)
-   - Manifest configuration
-   - Dependency management
-
-9. LOGGING & AUDIT
-   - SLF4J framework
-   - Structured logging
-   - Audit trail
-   - Event tracking
-
-10. SECURITY
-    - Authentication
-    - Session management
-    - Token-based security
-    - Input validation
-
-================================================================================
-17. SUPPORT & TROUBLESHOOTING
-================================================================================
-
-PROBLÈME: Kafka ne démarre pas
-SOLUTION:
-- Vérifier que C:\tmp\kraft-combined-logs existe
-- Vérifier les permissions d'accès
-- Vérifier que le port 9092 n'est pas utilisé
-- Nettoyer les logs: rmdir /s C:\tmp\kraft-combined-logs
-
-PROBLÈME: Port 8080 déjà utilisé
-SOLUTION:
-netstat -ano | findstr :8080
-taskkill /PID <PID> /F
-
-PROBLÈME: Pas de transactions en temps réel
-SOLUTION:
-- Rafraîchir la page (F5)
-- Vérifier la console Kafka
-- Vérifier les logs du serveur
-- Vérifier que Kafka est bien démarré
-
-PROBLÈME: Erreur de connexion (login)
-SOLUTION:
-- Vérifier les credentials (voir tableau section 6)
-- Vérifier que le serveur est bien lancé
-- Vérifier la console pour les erreurs
-- Essayer un autre compte
-
-PROBLÈME: Emails ne sont pas envoyés
-SOLUTION:
-- Vérifier la configuration Gmail SMTP dans le code
-- Vérifier que le compte Gmail a les app passwords activé
-- Vérifier les logs pour les erreurs d'authentification
-- Vérifier la connexion internet
-
-LOGS UTILES:
-
-Console Kafka:
-- Chercher "[ControllerServer id=1]"
-- Chercher "Awaiting socket connections"
-- Chercher les Topics créés
-
-Console Application:
-- Chercher "[main] INFO"
-- Chercher les requêtes HTTP
-- Chercher les erreurs d'authentification
-
-================================================================================
-18. STATUS - PRODUCTION READY
-================================================================================
-
-✓ Design professionnel et cohérent
-✓ Toutes les features fonctionnelles
-✓ Interface intuitive et responsive
-✓ Authentification sécurisée
-✓ Performances optimales
-✓ Données en temps réel
-✓ Déploiement simple (1 JAR)
-✓ Architecture scalable
-✓ Logging complet
-✓ Gestion d'erreurs robuste
-✓ Code bien structuré
-
-PRÊT POUR PRÉSENTATION: OUI ✓
-
-================================================================================
-19. INFORMATIONS SUPPLÉMENTAIRES
-================================================================================
-
-FICHIER JAR EXÉCUTABLE:
-Location: C:\BankingTransaction\Transaction\target\banking-kafka-1.0.0-jar-with-dependencies.jar
-Taille: ~18 MB
-Contient: Tous les dépendances et ressources
-
-CONFIGURATION SYSTÈME REQUISE:
-- OS: Windows 10/11 ou Linux
-- RAM: 2GB minimum (4GB recommandé)
-- CPU: Dual-core minimum
-- Disque: 100MB libre
-
-VERSION DU PROJET:
-- Version: 1.0.0
-- Group ID: com.demo
-- Artifact ID: banking-kafka
-
-BUILD TOOL:
-- Maven 3.8.1+
-- Java 17+
-
-================================================================================
-20. CONCLUSION
-================================================================================
-
-Le projet TransactFlow est une implémentation complète et fonctionnelle d'un
-système de surveillance des transactions bancaires en temps réel utilisant
-Apache Kafka.
-
-POINTS FORTS:
-
-✓ Architecture moderne event-driven
-✓ Interface utilisateur professionnelle
-✓ Détection de fraude en temps réel
-✓ Notifications automatiques
-✓ Scalabilité horizontale
-✓ Logging et audit complets
-✓ Code propre et bien structuré
-✓ Documentation complète
-
-Le projet démontre une compréhension solide des technologies modernes
-incluant Kafka, REST APIs, design responsive, et architecture distribuée.
-
-STATUS: Production Ready - Prêt pour déploiement et présentation
+Le système permet de :
+  • Produire des transactions bancaires (virements, paiements, retraits, dépôts)
+  • Valider automatiquement chaque transaction selon des règles métier
+  • Détecter les fraudes en temps réel
+  • Visualiser les transactions via un dashboard web interactif
 
 ================================================================================
 
-Rapport généré le: 29 Mars 2026
-Auteur: Claude Code Assistant
-Version du rapport: 1.0.0
+2. Architecture du Système
+
+Architecture basée sur un Producer Kafka, un Topic partitionné (3 partitions),
+et deux Consumers (Validation + Détection de fraude).
+
+Flux :
+  Producer → Topic bank.transactions.pending → Consumers → Dashboard Web
+
+================================================================================
+
+3. Technologies Utilisées
+
+  • Java 17+
+  • Apache Kafka 3.9.0 (mode KRaft)
+  • Jackson 2.16.1 (JSON)
+  • SLF4J + Logback (Logging)
+  • Maven 3.9.12
+  • Java HttpServer (API REST + Dashboard)
+
+================================================================================
+
+4. Description des Composants
+
+4.1 BankTransaction.java
+  Modèle de données représentant une transaction bancaire.
+  Champs principaux :
+    • transactionId (UUID)
+    • senderId / receiverId
+    • amount / currency
+    • type (DEPOSIT, WITHDRAWAL, TRANSFER, PAYMENT)
+    • status (PENDING, APPROVED, REJECTED, FLAGGED)
+    • timestamp (LocalDateTime)
+    • description
+
+4.2 Serializer / Deserializer
+  Conversion des objets Java en JSON (byte[]) et inversement pour Kafka.
+  Utilisation du module JavaTimeModule pour LocalDateTime.
+
+4.3 TransactionProducer
+  Envoie les transactions vers le topic Kafka.
+  Configuration importante :
+    • acks=all
+    • enable.idempotence=true
+    • compression=snappy
+    • retries=3
+
+4.4 TransactionConsumer (Validation)
+  Règles métier :
+    • amount ≤ 0         → REJECTED
+    • amount > 50 000 €  → REJECTED
+    • sender manquant    → REJECTED
+    • Sinon              → APPROVED
+
+4.5 FraudDetectionConsumer
+  Détection en temps réel basée sur 4 règles :
+    • amount > 10 000 €              → HIGH risk
+    • > 3 transactions en 60 secondes → MEDIUM risk
+    • Montant rond ≥ 5000            → LOW risk
+    • Destinataire inconnu           → LOW risk
+
+4.6 DashboardServer
+  Serveur HTTP exposant les endpoints REST :
+    • /api/send
+    • /api/transactions
+    • /api/stats
+    • /api/demo
+  Accessible via http://localhost:8080
+
+================================================================================
+
+5. Concepts Kafka Utilisés
+
+  • Topic         : canal de messages
+  • Partition     : parallélisme et scalabilité
+  • Consumer Group: load balancing
+  • Offset        : position unique d'un message
+  • Idempotence   : garantie exactly-once
+  • Mode KRaft    : Kafka sans ZooKeeper
+
+================================================================================
+
+6. Scénario de Démonstration
+
+Exemple : Transaction de 98 000 € vers ACC-999 → FLAGGED car montant élevé,
+destinataire inconnu et montant rond suspect.
+
+================================================================================
+
+Projet réalisé par Mahmoud Elloumi et Anis Kchaw
+dans le cadre d'un TP Apache Kafka.
 
 ================================================================================

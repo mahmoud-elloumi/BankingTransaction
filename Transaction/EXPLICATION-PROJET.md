@@ -171,13 +171,12 @@ Lit les transactions depuis Kafka et applique les **règles de validation métie
 
 ### 5. `FraudDetectionConsumer.java` — Détection de Fraude en Temps Réel
 
-Analyse chaque transaction avec **4 règles de détection** :
+Analyse chaque transaction avec **3 règles de détection** :
 
 | Règle | Condition | Niveau de Risque |
 |-------|-----------|-----------------|
 | **Montant élevé** | `amount > 10 000 EUR` | 🔴 HIGH |
 | **Vélocité** | `> 3 transactions en 60 secondes` depuis le même compte | 🟡 MEDIUM |
-| **Montant rond suspect** | `amount >= 5000` et multiple de 1000 | 🟢 LOW |
 | **Destinataire inconnu** | Transfer vers un compte non whitelisté | 🟢 LOW |
 
 **Mécanisme de vélocité** : Utilise un `ConcurrentHashMap<String, Deque<LocalDateTime>>` pour tracker les timestamps des transactions par expéditeur dans une fenêtre glissante de 60 secondes.
@@ -422,7 +421,7 @@ log.info("FraudDetectionConsumer started — listening on {}", TOPIC_PENDING);
 ```
 > Le même topic `pending` est lu par **deux consumers différents** (TransactionConsumer et FraudDetectionConsumer), chacun dans un **group_id différent**, donc chacun reçoit **tous** les messages.
 
-**Analyse de fraude** — 4 règles sont appliquées (dans `FraudDetectionConsumer.java`) :
+**Analyse de fraude** — 3 règles sont appliquées (dans `FraudDetectionConsumer.java`) :
 ```java
 private void analyze(BankTransaction tx) {
     List<String> alerts = new ArrayList<>();
@@ -437,12 +436,7 @@ private void analyze(BankTransaction tx) {
         alerts.add("VELOCITY-EXCEEDED");
     }
 
-    // Règle 3 — Montant rond suspect (>= 5000 et multiple de 1000 → LOW risk)
-    if (isRoundLargeAmount(tx.getAmount())) {
-        alerts.add("ROUND-LARGE-AMOUNT");
-    }
-
-    // Règle 4 — Destinataire inconnu (→ LOW risk)
+    // Règle 3 — Destinataire inconnu (→ LOW risk)
     if (tx.getType() == TransactionType.TRANSFER && !knownReceivers.contains(tx.getReceiverId())) {
         alerts.add("UNKNOWN-RECEIVER");
     }
@@ -498,14 +492,13 @@ TransactionConsumer      FraudDetectionConsumer             DashboardServer
 |---|-----------|-------------|---------|------|-----------------|
 | 1 | ACC-001 | ACC-002 | 1 500 € | TRANSFER | ✅ APPROVED |
 | 2 | ACC-003 | ACC-001 | 250.75 € | PAYMENT | ✅ APPROVED |
-| 3 | ACC-002 | — | 5 000 € | WITHDRAWAL | ✅ APPROVED + ⚠️ ROUND-LARGE-AMOUNT |
+| 3 | ACC-002 | — | 5 000 € | WITHDRAWAL | ✅ APPROVED |
 | 4 | — | ACC-004 | 3 000 € | DEPOSIT | ✅ APPROVED |
-| 5 | ACC-005 | ACC-999 | 98 000 € | TRANSFER | 🚨 FLAGGED (HIGH-AMOUNT + UNKNOWN-RECEIVER + ROUND-LARGE-AMOUNT) |
+| 5 | ACC-005 | ACC-999 | 98 000 € | TRANSFER | 🚨 FLAGGED (HIGH-AMOUNT + UNKNOWN-RECEIVER) |
 
 La **transaction #5** est flaguée car :
-- 98 000 € > 10 000 € (seuil de détection)
-- ACC-999 n'est pas dans la liste des comptes connus
-- 98 000 est un montant rond ≥ 5 000 et multiple de 1 000
+- 98 000 € > 10 000 € (seuil de détection HIGH-AMOUNT)
+- ACC-999 n'est pas dans la liste des comptes connus (UNKNOWN-RECEIVER)
 
 ---
 
@@ -705,10 +698,11 @@ Ce projet couvre les **concepts avancés** suivants :
 
 ---
 
-## 👨‍💻 Auteur & Statut
+## 👨‍💻 Auteurs & Statut
 
 **Projet :** TransactFlow v1.0.0
 **Status :** ✅ **Production Ready** — Prêt pour présentation
+**Auteurs :** Mahmoud Elloumi & Anis Kchaw
 **Réalisé dans le cadre :** TP Apache Kafka — Système complet de transactions bancaires en temps réel
 
 **Capabilities:**
@@ -738,6 +732,7 @@ Ce projet couvre les **concepts avancés** suivants :
 
 ---
 
-**Dernière mise à jour :** 29 Mars 2026
+**Auteurs :** Mahmoud Elloumi & Anis Kchaw
+**Dernière mise à jour :** 15 Avril 2026
 **Version :** 1.0.0 (Stable)
 **Ready for Demo :** ✅ YES
